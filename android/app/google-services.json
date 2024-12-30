@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "652411098676",
+    "project_id": "new1-60139",
+    "storage_bucket": "new1-60139.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652411098676:android:5f2cee76facfc003d15c61",
+        "android_client_info": {
+          "package_name": "com.example.conju_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "652411098676-7u7bqf9sicgbivthcqnqbq50f4ujq6af.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCioZxk9wx5xqTW4NxhMwxHUvpnvIYSeUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "652411098676-7u7bqf9sicgbivthcqnqbq50f4ujq6af.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
