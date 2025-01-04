@@ -2,7 +2,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conju_app/pages/admin/home_page.dart';
 import 'package:conju_app/pages/auth/sign_in.dart';
-import 'package:conju_app/pages/home_screen.dart';
+import 'package:conju_app/pages/nav_pages/user_home_page.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -100,10 +101,10 @@ class FirebaseAuthServices {
             Get.to(() => const AdminHomePage());
           } else if (role == 'user') {
             // Navigate to User Home Screen
-            Get.to(() => const HomeScreen());
+            Get.to(() => const UserHomePage());
           } else {
             // Default fallback
-            Get.to(() => const HomeScreen());
+            Get.to(() => const UserHomePage());
           }
         } else {
           Get.snackbar("Error", "User data not found.");

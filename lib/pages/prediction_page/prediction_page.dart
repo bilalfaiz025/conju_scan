@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:confetti/confetti.dart';
 import 'package:conju_app/constants/color_constant.dart';
-import 'package:conju_app/pages/home_screen.dart';
 import 'package:conju_app/pages/nav_pages/doctors_page.dart';
 import 'package:conju_app/pages/nav_pages/products_page.dart';
+import 'package:conju_app/pages/nav_pages/user_home_page.dart';
 import 'package:conju_app/widgets/botton/rounded_button.dart';
 import 'package:conju_app/widgets/text_styles.dart';
 import 'package:equal_space/equal_space.dart';
@@ -176,7 +176,7 @@ class _PredictionPageState extends State<PredictionPage> {
               child: CustomRoundButton(
                 color: AppColors.green,
                 onPressed: () {
-                  Get.offAll(const HomeScreen());
+                  Get.offAll(const UserHomePage());
                 },
                 text: 'Try Again',
               ),

@@ -12,7 +12,7 @@ plugins {
 android {
     namespace = "com.example.conju_app"
     compileSdk = 34
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -49,4 +49,5 @@ flutter {
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:33.6.0')
     implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-appcheck-playintegrity:16.0.0'
 }

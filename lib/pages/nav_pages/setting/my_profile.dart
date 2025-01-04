@@ -3,6 +3,7 @@ import 'package:conju_app/services/firebase_services/user/user_services.dart';
 import 'package:conju_app/pages/auth/sign_in.dart';
 import 'package:conju_app/pages/nav_pages/setting/edit_profile.dart';
 import 'package:conju_app/widgets/botton/rounded_button.dart';
+import 'package:conju_app/widgets/others/info_row.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,9 +16,8 @@ class MyProfileScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
-        elevation: 0,
-        backgroundColor: AppColors.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.greenish,
         title: const Text("Profile"),
       ),
       body: FutureBuilder<Map<String, dynamic>?>(
@@ -56,22 +56,20 @@ class MyProfileScreen extends StatelessWidget {
                   // Example, you can update this from Firestore if available
                   Info(infoKey: "Phone", info: phone),
                   Info(infoKey: "Email Address", info: email),
-                  const SizedBox(height: 16.0),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      width: 160,
-                      child: CustomRoundButton(
-                        onPressed: () {
-                          Get.to(EditProfileScreen(
-                            email: email,
-                            phone: phone,
-                            name: name,
-                            profilePic: profilePic,
-                          ));
-                        },
-                        child: const Text("Edit profile"),
-                      ),
+                  const SizedBox(height: 20.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: CustomRoundButton(
+                      color: AppColors.greenish,
+                      text: 'Edit Profile',
+                      onPressed: () {
+                        Get.to(EditProfileScreen(
+                          email: email,
+                          phone: phone,
+                          name: name,
+                          profilePic: profilePic,
+                        ));
+                      },
                     ),
                   ),
                 ],
@@ -120,39 +118,6 @@ class ProfilePic extends StatelessWidget {
       child: CircleAvatar(
         radius: 50,
         backgroundImage: NetworkImage(image),
-      ),
-    );
-  }
-}
-
-class Info extends StatelessWidget {
-  const Info({
-    super.key,
-    required this.infoKey,
-    required this.info,
-  });
-
-  final String infoKey, info;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            infoKey,
-            style: TextStyle(
-              color: Theme.of(context)
-                  .textTheme
-                  .bodyLarge!
-                  .color!
-                  .withOpacity(0.8),
-            ),
-          ),
-          Text(info),
-        ],
       ),
     );
   }

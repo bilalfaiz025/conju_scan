@@ -1,9 +1,8 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conju_app/pages/admin/home_page.dart';
 import 'package:conju_app/pages/boarding/boarding_page.dart';
-import 'package:conju_app/pages/home_screen.dart';
+import 'package:conju_app/pages/nav_pages/user_home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -40,7 +39,8 @@ class _SplashScreenState extends State<SplashScreen> {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-      DocumentSnapshot userDoc = await firestore.collection('users').doc(userId).get();
+      DocumentSnapshot userDoc =
+          await firestore.collection('users').doc(userId).get();
 
       if (userDoc.exists) {
         var userData = userDoc.data() as Map<String, dynamic>?;
@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
           if (role == 'admin') {
             Get.to(() => const AdminHomePage());
           } else if (role == 'user') {
-            Get.to(() => const HomeScreen());
+            Get.to(() => const UserHomePage());
           } else {
             _navigateToIntroScreenWithError("Invalid role.");
           }

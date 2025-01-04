@@ -1,3 +1,5 @@
+import 'package:conju_app/pages/admin/services/doctor/add_doctor.dart';
+import 'package:conju_app/pages/admin/services/doctor/manage_docts.dart';
 import 'package:conju_app/pages/admin/services/product/add_product.dart';
 import 'package:conju_app/pages/admin/services/product/manage_products.dart';
 import 'package:conju_app/pages/admin/services/slider/update_slider.dart';
@@ -156,8 +158,12 @@ class AdminHomePage extends StatelessWidget {
                   secondIcon: CupertinoIcons.dial,
                 ),
                 _buildRow(
-                  onTap: () {},
-                  secondOnTap: () {},
+                  onTap: () {
+                    Get.to(() => const AddDoctorScreen());
+                  },
+                  secondOnTap: () {
+                    Get.to(() => const ManageDoctorScreen());
+                  },
                   title: 'Add Doctor',
                   secondTitle: 'Remove Doctor',
                   icon: Icons.dangerous,

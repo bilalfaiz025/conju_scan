@@ -1,7 +1,13 @@
 // ignore_for_file: unused_local_variable
 
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:conju_app/constants/color_constant.dart';
+import 'package:conju_app/pages/admin/home_page.dart';
+import 'package:conju_app/widgets/text_field/text_form_field.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AddAdSliderScreen extends StatefulWidget {
@@ -12,177 +18,244 @@ class AddAdSliderScreen extends StatefulWidget {
 }
 
 class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _subtitleController = TextEditingController();
-  final _websiteLinkController = TextEditingController();
-  final _imageLinkController = TextEditingController();
-
-  File? _selectedImage;
-  bool _isUsingImageLink = false;
-
   final ImagePicker _picker = ImagePicker();
+  final _formKey = GlobalKey<FormState>();
 
-  // Function to select an image from the device
-  Future<void> _selectImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedImage != null) {
+  final TextEditingController prodName = TextEditingController();
+  final TextEditingController prodPrice = TextEditingController();
+  final TextEditingController prodDesp = TextEditingController();
+  final TextEditingController prodLink = TextEditingController();
+  final TextEditingController prodImageL = TextEditingController();
+
+  File? _productImage;
+  bool _isLoading = false;
+  bool _isUrlOption = false; // Toggle between image upload or URL
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
       setState(() {
-        _selectedImage = File(pickedImage.path);
-        _isUsingImageLink = false;
+        _productImage = File(pickedFile.path);
+        prodImageL.clear(); // Clear URL field when uploading an image
       });
     }
   }
 
-  // Function to validate and save the form
-  void _saveAdSlider() {
-    if (_formKey.currentState?.validate() ?? false) {
-      final title = _titleController.text.trim();
-      final subtitle = _subtitleController.text.trim();
-      final websiteLink = _websiteLinkController.text.trim();
-      final imageLink = _isUsingImageLink ? _imageLinkController.text.trim() : null;
+  Future<String?> _uploadImageToStorage() async {
+    if (_productImage == null) return null;
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('product_images')
+        .child('${DateTime.now()}.jpg');
+    await ref.putFile(_productImage!);
+    return await ref.getDownloadURL();
+  }
 
-      final image = _selectedImage ?? (_isUsingImageLink && imageLink != null
-              ? imageLink
-              : null);
+  Future<void> _addSlider() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      try {
+        String? imageUrl =
+            _isUrlOption ? prodImageL.text : await _uploadImageToStorage();
 
-      if (image == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select or enter a background image.')),
-        );
-        return;
+        await FirebaseFirestore.instance.collection('Slider').add({
+          'name': prodName.text.trim(),
+          'description': prodDesp.text.trim(),
+          'link': prodLink.text.trim(),
+          'image': imageUrl,
+        });
+
+        Get.to(const AdminHomePage());
+        Get.snackbar('Success', 'Slider AD has been added successfully');
+      } catch (e) {
+        Get.snackbar('Error', 'Failed to add Slider Information: $e');
+      } finally {
+        setState(() => _isLoading = false);
       }
-
-      // Example:
-      // AdSliderService.addAdSlider(
-      //   title: title,
-      //   subtitle: subtitle,
-      //   backgroundImage: image,
-      //   websiteLink: websiteLink,
-      // );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ad Slider added successfully!')),
-      );
-
-      // Clear the form after saving
-      _formKey.currentState?.reset();
-      setState(() {
-        _selectedImage = null;
-        _isUsingImageLink = false;
-      });
     }
+  }
+
+  void _showImageSourceBottomSheet() {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera',
+                  style: TextStyle(color: Color(0xFF41BEA6))),
+              onTap: () {
+                _pickImage(ImageSource.camera);
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery',
+                  style: TextStyle(color: Color(0xFF41BEA6))),
+              onTap: () {
+                _pickImage(ImageSource.gallery);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Ad Slider', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.white,
+        title: const Text('Add AD Slider',
+            style: TextStyle(
+                color: Color(0xFF41BEA6), fontWeight: FontWeight.w600)),
+        iconTheme: const IconThemeData(color: Color(0xFF41BEA6)),
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title Field
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => value?.isEmpty ?? true ? 'Title is required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Subtitle Field
-              TextFormField(
-                controller: _subtitleController,
-                decoration: const InputDecoration(
-                  labelText: 'Subtitle',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => value?.isEmpty ?? true ? 'Subtitle is required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Background Image
-              const Text(
-                'Background Image',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _selectImage,
-                      child: const Text('Select Image'),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Radio<bool>(
+                      value: false,
+                      groupValue: _isUrlOption,
+                      onChanged: (value) =>
+                          setState(() => _isUrlOption = false),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _isUsingImageLink = !_isUsingImageLink;
-                          _selectedImage = null;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isUsingImageLink ? Colors.teal : Colors.grey,
+                    const Text('Upload Image'),
+                    const SizedBox(width: 20),
+                    Radio<bool>(
+                      value: true,
+                      groupValue: _isUrlOption,
+                      onChanged: (value) => setState(() => _isUrlOption = true),
+                    ),
+                    const Text('Image URL'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Image upload or URL input
+                _isUrlOption
+                    ? CustomInputField(
+                        fillColor: const Color(0xFFF5FCF9),
+                        filled: true,
+                        textController: prodImageL,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 16),
+                        hintText: "Product Image Url",
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a URL';
+                          }
+                          const urlPattern =
+                              r'^(https?|ftp)://[^\s/$.?#].[^\s]*$';
+                          if (!RegExp(urlPattern).hasMatch(value)) {
+                            return 'Please enter a valid URL';
+                          }
+                          return null;
+                        },
+                      )
+                    : GestureDetector(
+                        onTap: _showImageSourceBottomSheet,
+                        child: Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.mediumAquarineLite,
+                          ),
+                          child: _productImage != null
+                              ? Image.file(_productImage!, fit: BoxFit.cover)
+                              : const Center(
+                                  child: Icon(Icons.camera_alt,
+                                      size: 40,
+                                      color: AppColors.mediumAquarine)),
+                        ),
                       ),
-                      child: const Text('Use Image Link'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (_isUsingImageLink)
-                TextFormField(
-                  controller: _imageLinkController,
-                  decoration: const InputDecoration(
-                    labelText: 'Image Link',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value?.isEmpty ?? true ? 'Image link is required' : null,
-                )
-              else if (_selectedImage != null)
-                Image.file(_selectedImage!, height: 200, fit: BoxFit.cover),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // Website Link
-              TextFormField(
-                controller: _websiteLinkController,
-                decoration: const InputDecoration(
-                  labelText: 'Go to Website Link',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Website link is required' : null,
-              ),
-              const SizedBox(height: 24),
+                // Product Name, Description, Price, and Link
+                ..._buildTextFields(),
+                const SizedBox(height: 16),
 
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveAdSlider,
+                // Submit Button
+                ElevatedButton(
+                  onPressed: _addSlider,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.teal,
+                    elevation: 2,
+                    backgroundColor: AppColors.mediumAquarine,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 45),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Save Ad Slider'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Text("Add Product"),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildTextFields() {
+    return [
+      _buildInputField(prodName, 'Title', 'Enter title of AD Slider'),
+      const SizedBox(height: 16),
+      _buildInputField(prodDesp, 'Sub title', 'Enter title of AD Slider',
+          maxLines: 4),
+      const SizedBox(height: 16),
+      const SizedBox(height: 16),
+      _buildInputField(prodLink, 'Product Link', 'Please enter a valid URL',
+          validator: (value) {
+        if (value == null || value.isEmpty) return 'Please enter a URL';
+        const urlPattern = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$';
+        if (!RegExp(urlPattern).hasMatch(value)) {
+          return 'Please enter a valid URL';
+        }
+        return null;
+      }),
+    ];
+  }
+
+  Widget _buildInputField(
+      TextEditingController controller, String hint, String errorMessage,
+      {int maxLines = 1,
+      TextInputType? keyboardType,
+      String? Function(String?)? validator}) {
+    return CustomInputField(
+      fillColor: const Color(0xFFF5FCF9),
+      filled: true,
+      textController: controller,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      hintText: hint,
+      maxlines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator ??
+          (value) => value == null || value.isEmpty ? errorMessage : null,
     );
   }
 }

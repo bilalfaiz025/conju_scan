@@ -17,6 +17,7 @@ class CustomInputField extends StatelessWidget {
   final String? suffixIcon;
   final bool filled;
   final Color? fillColor;
+  final String? labelText;
   final FormFieldValidator<String>? validator;
   final bool? showBorder;
   final IconData? iconForSuffix;
@@ -33,6 +34,7 @@ class CustomInputField extends StatelessWidget {
     this.textController,
     this.keyboardType,
     this.onChanged,
+    this.labelText,
     this.suffix,
     this.showBorder = true,
     this.onSuffixTap,
@@ -76,6 +78,7 @@ class CustomInputField extends StatelessWidget {
         counterText: counterText,
         fillColor: fillColor ?? Colors.white,
         filled: filled,
+        labelText: labelText,
         border: const OutlineInputBorder(
           borderSide: BorderSide.none,
           borderRadius: BorderRadius.all(Radius.circular(8)),

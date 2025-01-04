@@ -1,122 +1,117 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:conju_app/constants/color_constant.dart';
-import 'package:conju_app/pages/admin/home_page.dart';
-import 'package:conju_app/widgets/text_field/text_form_field.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:conju_app/constants/color_constant.dart';
+import 'package:conju_app/widgets/text_field/text_form_field.dart';
 
-class UpdateProductScreen extends StatefulWidget {
-  final String productId;
+class EditDoctorScreen extends StatefulWidget {
+  final String doctorId;
 
-  const UpdateProductScreen({super.key, required this.productId});
+  const EditDoctorScreen({super.key, required this.doctorId});
 
   @override
-  State<UpdateProductScreen> createState() => _UpdateProductScreenState();
+  // ignore: library_private_types_in_public_api
+  _EditDoctorScreenState createState() => _EditDoctorScreenState();
 }
 
-class _UpdateProductScreenState extends State<UpdateProductScreen> {
-  final ImagePicker _picker = ImagePicker();
+class _EditDoctorScreenState extends State<EditDoctorScreen> {
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
 
-  final TextEditingController prodName = TextEditingController();
-  final TextEditingController prodPrice = TextEditingController();
-  final TextEditingController prodDesp = TextEditingController();
-  final TextEditingController prodLink = TextEditingController();
-  final TextEditingController prodImageL = TextEditingController();
+  final TextEditingController doctorName = TextEditingController();
+  final TextEditingController doctorEmail = TextEditingController();
+  final TextEditingController doctorPhone = TextEditingController();
+  final TextEditingController doctorAddress = TextEditingController();
+  final TextEditingController doctorSpecialization = TextEditingController();
 
-  File? _productImage;
+  File? _profileImage;
   bool _isLoading = false;
-  bool _isUrlOption = false; // Toggle between image upload or URL
-  String? _productImageUrl; // To store the product image URL if provided
+  String? _profileImageUrl; // Store the profile image URL (if any)
 
   @override
   void initState() {
     super.initState();
-    _loadProductDetails();
+    _fetchDoctorDetails();
   }
 
-  // Fetch existing product details from Firestore
-  Future<void> _loadProductDetails() async {
+  // Fetch existing doctor details from Firestore
+  Future<void> _fetchDoctorDetails() async {
     try {
-      DocumentSnapshot productDoc = await FirebaseFirestore.instance
-          .collection('Products')
-          .doc(widget.productId)
+      DocumentSnapshot docSnapshot = await FirebaseFirestore.instance
+          .collection('Doctors')
+          .doc(widget.doctorId)
           .get();
 
-      if (productDoc.exists) {
-        final productData = productDoc.data() as Map<String, dynamic>;
+      if (docSnapshot.exists) {
+        var data = docSnapshot.data() as Map<String, dynamic>;
 
-        setState(() {
-          prodName.text = productData['name'];
-          prodPrice.text = productData['price'];
-          prodDesp.text = productData['description'];
-          prodLink.text = productData['link'];
-          prodImageL.text = productData['image'] ?? '';
+        doctorName.text = data['name'] ?? '';
+        doctorEmail.text = data['email'] ?? '';
+        doctorPhone.text = data['phone'] ?? '';
+        doctorAddress.text = data['address'] ?? '';
+        doctorSpecialization.text = data['specialization'] ?? '';
 
-          // Set URL or upload option based on image URL presence
-          _productImageUrl = productData['image'];
-          _isUrlOption =
-              _productImageUrl != null && _productImageUrl!.isNotEmpty;
-        });
+        // Load existing profile image if available
+        _profileImageUrl =
+            data['profile_picture']; // Profile URL from Firestore
+        if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
+          // If the profile image URL is available, display it.
+          setState(() {});
+        }
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load product details: $e');
-    }
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _productImage = File(pickedFile.path);
-        prodImageL.clear(); // Clear URL field when uploading an image
-      });
+      Get.snackbar('Error', 'Failed to fetch doctor details: $e');
     }
   }
 
   Future<String?> _uploadImageToStorage() async {
-    if (_productImage == null) return null;
+    if (_profileImage == null) return null;
+
     final ref = FirebaseStorage.instance
         .ref()
-        .child('product_images')
+        .child('doctor_profiles')
         .child('${DateTime.now()}.jpg');
-    await ref.putFile(_productImage!);
+    await ref.putFile(_profileImage!);
     return await ref.getDownloadURL();
   }
 
-  Future<void> _updateProduct() async {
+  Future<void> _saveDoctorDetails() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+      });
 
       try {
-        String? imageUrl =
-            _isUrlOption ? prodImageL.text : await _uploadImageToStorage();
-
+        // If a new image is selected, upload it
+        final imageUrl = await _uploadImageToStorage();
         await FirebaseFirestore.instance
-            .collection('Products')
-            .doc(widget.productId)
+            .collection('Doctors')
+            .doc(widget.doctorId)
             .update({
-          'name': prodName.text.trim(),
-          'description': prodDesp.text.trim(),
-          'price': prodPrice.text.trim(),
-          'link': prodLink.text.trim(),
-          'image': imageUrl,
+          'name': doctorName.text.trim(),
+          'email': doctorEmail.text.trim(),
+          'phone': doctorPhone.text.trim(),
+          'address': doctorAddress.text.trim(),
+          'specialization': doctorSpecialization.text.trim(),
+          'profile_picture': imageUrl ?? _profileImageUrl ?? '',
         });
 
-        Get.snackbar('Success', 'Product updated successfully');
-        Get.off(const AdminHomePage()); // Navigate back to previous screen
+        Get.snackbar('Success', 'Doctor details updated successfully');
+        Navigator.pop(context);
       } catch (e) {
-        Get.snackbar('Error', 'Failed to update product: $e');
+        Get.snackbar('Error', 'Failed to update doctor details: $e');
       } finally {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
-  void _showImageSourceBottomSheet() {
+  void _showImageSourceBottomSheet(BuildContext context) {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
@@ -153,12 +148,21 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
     );
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Update Product',
+        title: const Text('Edit Doctor',
             style: TextStyle(
                 color: Color(0xFF41BEA6), fontWeight: FontWeight.w600)),
         iconTheme: const IconThemeData(color: Color(0xFF41BEA6)),
@@ -171,22 +175,22 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Profile Image Display with CircleAvatar
                 GestureDetector(
-                  onTap: _showImageSourceBottomSheet,
-                  child: _productImage != null
+                  onTap: () => _showImageSourceBottomSheet(context),
+                  child: _profileImage != null
                       ? ClipOval(
                           child: Image.file(
-                            _productImage!,
+                            _profileImage!,
                             fit: BoxFit.cover,
                             height: 200,
                             width: 200,
                           ),
                         )
-                      : (_productImageUrl != null &&
-                              _productImageUrl!.isNotEmpty)
+                      : _profileImageUrl != null && _profileImageUrl!.isNotEmpty
                           ? ClipOval(
                               child: Image.network(
-                                _productImageUrl!,
+                                _profileImageUrl!,
                                 fit: BoxFit.cover,
                                 height: 200,
                                 width: 200,
@@ -198,8 +202,10 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                             ),
                 ),
                 const SizedBox(height: 16),
+
+                // Button to Edit Profile Picture
                 ElevatedButton(
-                  onPressed: () => _showImageSourceBottomSheet(),
+                  onPressed: () => _showImageSourceBottomSheet(context),
                   style: ElevatedButton.styleFrom(
                     elevation: 2,
                     backgroundColor: AppColors.mediumAquarine,
@@ -208,16 +214,17 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text("Change Picture"),
+                  child: const Text("Edit Profile Picture"),
                 ),
                 const SizedBox(height: 16),
-                // Product Name, Description, Price, and Link
+
+                // Text Input Fields
                 ..._buildTextFields(),
                 const SizedBox(height: 16),
 
-                // Update Button
+                // Save Changes Button
                 ElevatedButton(
-                  onPressed: _updateProduct,
+                  onPressed: _isLoading ? null : _saveDoctorDetails,
                   style: ElevatedButton.styleFrom(
                     elevation: 2,
                     backgroundColor: AppColors.mediumAquarine,
@@ -231,8 +238,9 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : const Text("Update Product"),
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text("Save Changes"),
                 ),
               ],
             ),
@@ -244,24 +252,31 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
 
   List<Widget> _buildTextFields() {
     return [
-      _buildInputField(prodName, 'Product Name', 'Product name is required'),
+      _buildInputField(doctorName, 'Doctor Name', 'Doctor name is required'),
       const SizedBox(height: 16),
-      _buildInputField(
-          prodDesp, 'Product Description', 'Product description is required',
-          maxLines: 4),
-      const SizedBox(height: 16),
-      _buildInputField(prodPrice, 'Product Price', 'Product price is required',
-          keyboardType: TextInputType.number),
-      const SizedBox(height: 16),
-      _buildInputField(prodLink, 'Product Link', 'Please enter a valid URL',
-          validator: (value) {
-        if (value == null || value.isEmpty) return 'Please enter a URL';
-        const urlPattern = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$';
-        if (!RegExp(urlPattern).hasMatch(value)) {
-          return 'Please enter a valid URL';
+      _buildInputField(doctorEmail, 'Doctor Email', 'Valid email is required',
+          keyboardType: TextInputType.emailAddress, validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter an email';
+        }
+        const emailPattern = r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$';
+        if (!RegExp(emailPattern).hasMatch(value)) {
+          return 'Please enter a valid email';
         }
         return null;
       }),
+      const SizedBox(height: 16),
+      _buildInputField(doctorPhone, 'Doctor Phone', 'Phone number is required',
+          keyboardType: TextInputType.phone),
+      const SizedBox(height: 16),
+      _buildInputField(
+        doctorSpecialization,
+        'Specialization',
+        'Specialization field is required',
+      ),
+      const SizedBox(height: 16),
+      _buildInputField(doctorAddress, 'Doctor Address', 'Address is required',
+          maxLines: 3),
     ];
   }
 
@@ -275,7 +290,6 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
       filled: true,
       textController: controller,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      hintText: hint,
       maxlines: maxLines,
       keyboardType: keyboardType,
       validator: validator ??

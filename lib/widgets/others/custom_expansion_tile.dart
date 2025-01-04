@@ -7,6 +7,7 @@ class CustomExpansionTileWidget extends StatelessWidget {
   final Widget? trailing;
   final Widget? subtitle;
   final List<Widget> children;
+  final Color? backgroundColor;
   final Alignment? expandedAlignment;
   final EdgeInsetsGeometry? childrenPadding;
   const CustomExpansionTileWidget({
@@ -16,6 +17,7 @@ class CustomExpansionTileWidget extends StatelessWidget {
     this.expandedAlignment,
     this.childrenPadding,
     this.subtitle,
+    this.backgroundColor,
     this.trailing,
     required this.children,
   });
@@ -24,7 +26,8 @@ class CustomExpansionTileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         decoration: BoxDecoration(
-            color: AppColors.skyColor, borderRadius: BorderRadius.circular(12)),
+            color: backgroundColor ?? AppColors.skyColor,
+            borderRadius: BorderRadius.circular(12)),
         child: ExpansionTile(
           title: title,
           shape: Border.all(color: Colors.transparent),

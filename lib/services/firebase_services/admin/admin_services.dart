@@ -13,5 +13,4 @@ class AdminServices {
       Get.snackbar('Error', 'Failed to update user status: $e');
     }
   }
-  
 }

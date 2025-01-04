@@ -4,6 +4,7 @@ import 'package:conju_app/widgets/text_styles.dart';
 
 import 'package:equal_space/equal_space.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HelpCenterScreen extends StatelessWidget {
   const HelpCenterScreen({super.key});
@@ -13,9 +14,8 @@ class HelpCenterScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        elevation: 0,
-        backgroundColor: AppColors.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.greenish,
         title: const Text("Help Center"),
       ),
       body: SingleChildScrollView(
@@ -25,7 +25,14 @@ class HelpCenterScreen extends StatelessWidget {
             space: MediaQuery.sizeOf(context).height * 0.01,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Most Common Questions which are Asked"),
+              Text(
+                "Common Questions are listed as following",
+                style:
+                    MyTextStyle.smallText(context, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
               CustomExpansionTileWidget(
                   title: Text(
                     "What is Conjunctivitis?",
@@ -78,13 +85,13 @@ class HelpCenterScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                              "-> Redness in the white part of the eye or inner eyelids."),
-                          Text("-> Itching or irritation."),
+                              "\u2022 Redness in the white part of the eye or inner eyelids."),
+                          Text("\u2022 Itching or irritation."),
                           Text(
-                              "-> Watery or thick discharge, sometimes crusting around the eyes."),
-                          Text("-> Sensitivity to light (in some cases)."),
+                              "\u2022 Watery or thick discharge, sometimes crusting around the eyes."),
+                          Text("\u2022 Sensitivity to light (in some cases)."),
                           Text(
-                              "Symptoms vary based on the cause (viral, bacterial, allergic, etc.).")
+                              "\u2022 Symptoms vary based on the cause (viral, bacterial, allergic, etc.).")
                         ],
                       ),
                     )
@@ -95,11 +102,35 @@ class HelpCenterScreen extends StatelessWidget {
                     style: MyTextStyle.normalText(context,
                         fontWeight: FontWeight.w400),
                   ),
-                  children: const[
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text("This app is free to use—prioritize your health and well-being!"),
-                    )
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                          "\u2022 This app is free to use—prioritize your health and well-being!"),
+                    ),
                   ]),
+              const SizedBox(
+                height: 10,
+              ),
+              InkWell(
+                onTap: () {
+                  launchUrl(Uri(
+                    scheme: 'mailto',
+                    path: 'bilalfaiz396@gmail.com',
+                    query: 'subject=Help in App Inquiry&body=Hello!',
+                  ));
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.email),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text("Need more assistance")
+                  ],
+                ),
+              )
             ],
           ),
         ),

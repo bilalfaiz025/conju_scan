@@ -121,9 +121,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        elevation: 0,
-        backgroundColor: AppColors.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.greenish,
         title: const Text("Edit Profile"),
       ),
       body: SingleChildScrollView(
@@ -173,6 +172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: CustomRoundButton(
                   onPressed: saveProfile,
                   textColor: Colors.white,
+                  color: AppColors.greenish,
                   child: isLoading
                       ? const SizedBox(
                           width: 24,
