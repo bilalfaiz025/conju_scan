@@ -153,7 +153,7 @@ class AdminHomePage extends StatelessWidget {
                   onTap: () => Get.to(const ManageProductScreen()),
                   secondOnTap: () => Get.to(const AddAdSliderScreen()),
                   title: 'Edit Products',
-                  secondTitle: 'Edit Slider',
+                  secondTitle: 'Add Slider',
                   icon: Icons.list,
                   secondIcon: CupertinoIcons.dial,
                 ),

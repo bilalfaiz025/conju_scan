@@ -121,7 +121,7 @@ class _InteractiveIntroScreenState extends State<InteractiveIntroScreen> {
             right: 16,
             child: TextButton(
               onPressed: () => Get.to(
-                  const UserHomePage()), // Skip and go to the next screen
+                  const SignInScreen()), // Skip and go to the next screen
               child: const Text(
                 'Skip',
                 style: TextStyle(

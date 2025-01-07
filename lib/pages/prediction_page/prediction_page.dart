@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:confetti/confetti.dart';
 import 'package:conju_app/constants/color_constant.dart';
+import 'package:conju_app/model/prediction_model.dart';
 import 'package:conju_app/pages/nav_pages/doctors_page.dart';
 import 'package:conju_app/pages/nav_pages/products_page.dart';
 import 'package:conju_app/pages/nav_pages/user_home_page.dart';
@@ -9,8 +12,12 @@ import 'package:conju_app/widgets/text_styles.dart';
 import 'package:equal_space/equal_space.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:conju_app/model/prediction_model.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PredictionPage extends StatefulWidget {
@@ -31,6 +38,7 @@ class _PredictionPageState extends State<PredictionPage> {
   late final ConfettiController _confettiController;
   late final String prediction;
   late final double confidence;
+  final ScreenshotController _screenshotController = ScreenshotController();
   bool showText = true;
 
   @override
@@ -54,6 +62,41 @@ class _PredictionPageState extends State<PredictionPage> {
     super.dispose();
   }
 
+  Future<void> imagesave() async {
+    User? userCredential = FirebaseAuth.instance.currentUser;
+    try {
+      final Uint8List? uint8list = await _screenshotController.capture();
+      final imageEncoded = base64Encode(uint8list!);
+      await Permission.storage.request();
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential!.uid)
+          .collection('images')
+          .add({'image': imageEncoded, 'date': DateTime.now()});
+
+      if (uint8list.toString().isNotEmpty) {
+        final PermissionStatus status =
+            await Permission.manageExternalStorage.request();
+        if (status.isGranted) {
+          final result =
+              await ImageGallerySaverPlus.saveImage(uint8list, quality: 90);
+          if (result['isSuccess']) {
+            Get.snackbar('Successfull', 'Image Saved Successfully"');
+          } else {
+            Get.snackbar('Error during saving',
+                'Error in Saving Image: ${result['error']}');
+          }
+        } else {
+          Get.snackbar('Error', 'Permission Denied for Saving Image');
+        }
+      } else {
+        Get.snackbar('Error', 'Error in Capturing Screenshot');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Error $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,37 +108,52 @@ class _PredictionPageState extends State<PredictionPage> {
               color: AppColors.mediumAquarine, fontWeight: FontWeight.w600),
         ),
         iconTheme: const IconThemeData(color: Color(0xFF41BEA6)),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPredictionHeader(),
-                  const SizedBox(height: 20),
-                  _buildConfidenceIndicator(),
-                  const SizedBox(height: 20),
-                  _buildPredictionMessage(),
-                ],
-              ),
+        actions: [
+          IconButton(
+            onPressed: imagesave,
+            icon: const Icon(
+              Icons.save,
+              color: AppColors.highlightGrey,
             ),
-          ),
-          if (prediction == "Normal")
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
-                shouldLoop: false,
-                emissionFrequency: 0.5,
-                numberOfParticles: 20,
-                gravity: 0.1,
-              ),
-            ),
+          )
         ],
+      ),
+      body: Screenshot(
+        controller: _screenshotController,
+        child: Container(
+          color: Colors.white,
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPredictionHeader(),
+                      const SizedBox(height: 20),
+                      _buildConfidenceIndicator(),
+                      const SizedBox(height: 20),
+                      _buildPredictionMessage(),
+                    ],
+                  ),
+                ),
+              ),
+              if (prediction == "Normal")
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    shouldLoop: false,
+                    emissionFrequency: 0.5,
+                    numberOfParticles: 20,
+                    gravity: 0.1,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -201,6 +259,7 @@ class _PredictionPageState extends State<PredictionPage> {
             SizedBox(
               width: double.infinity,
               child: CustomRoundButton(
+                color: AppColors.mediumAquarine,
                 onPressed: () {
                   Get.to(const DoctorContactListScreen());
                 },
@@ -210,6 +269,7 @@ class _PredictionPageState extends State<PredictionPage> {
             SizedBox(
               width: double.infinity,
               child: CustomRoundButton(
+                color: AppColors.mediumAquarine,
                 onPressed: () {
                   Get.to(const ProductsScreen());
                 },
@@ -219,6 +279,7 @@ class _PredictionPageState extends State<PredictionPage> {
             SizedBox(
               width: double.infinity,
               child: CustomRoundButton(
+                color: AppColors.mediumAquarine,
                 onPressed: () {
                   launchUrl(Uri.parse(
                       "https://www.healthline.com/health/conjunctivitis#types-and-causes"));
@@ -226,7 +287,6 @@ class _PredictionPageState extends State<PredictionPage> {
                 text: 'Learn about disease',
               ),
             ),
-            // Toggle disclaimer visibility
             TextButton(
               onPressed: () {
                 setState(() {

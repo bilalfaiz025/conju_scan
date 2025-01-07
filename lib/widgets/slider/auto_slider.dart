@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:conju_app/constants/color_constant.dart';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AutoSlidingContainer extends StatelessWidget {
   final List<SliderItem> sliderItems;
@@ -33,12 +33,14 @@ class SliderItem {
   final String subtitle;
   final String imageUrl;
   final String buttonText;
+  final String buttonLink;
 
   SliderItem({
     required this.title,
     required this.subtitle,
     required this.imageUrl,
     required this.buttonText,
+    required this.buttonLink,
   });
 }
 
@@ -92,7 +94,7 @@ class _AutoSlidingContainerState extends State<_AutoSlidingContainer> {
     return Column(
       children: [
         SizedBox(
-          height: 250, // Adjust height based on your design
+          height: 250, // Fixed height to ensure layout consistency
           child: PageView.builder(
             controller: _pageController,
             itemCount: widget.sliderItems.length,
@@ -205,7 +207,7 @@ class ReusableSliderContainer extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 child: GestureDetector(
                   onTap: () {
-                    // Add your button functionality here
+                    launchUrl(Uri.parse(sliderItem.buttonLink));
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(

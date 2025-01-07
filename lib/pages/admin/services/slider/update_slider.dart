@@ -21,13 +21,13 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
   final ImagePicker _picker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController prodName = TextEditingController();
-  final TextEditingController prodPrice = TextEditingController();
-  final TextEditingController prodDesp = TextEditingController();
-  final TextEditingController prodLink = TextEditingController();
-  final TextEditingController prodImageL = TextEditingController();
+  final TextEditingController sliderName = TextEditingController();
+  final TextEditingController sliderPrice = TextEditingController();
+  final TextEditingController sliderDesp = TextEditingController();
+  final TextEditingController sliderLink = TextEditingController();
+  final TextEditingController sliderImageL = TextEditingController();
 
-  File? _productImage;
+  File? _sliderImage;
   bool _isLoading = false;
   bool _isUrlOption = false; // Toggle between image upload or URL
 
@@ -35,19 +35,19 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _productImage = File(pickedFile.path);
-        prodImageL.clear(); // Clear URL field when uploading an image
+        _sliderImage = File(pickedFile.path);
+        sliderImageL.clear(); // Clear URL field when uploading an image
       });
     }
   }
 
   Future<String?> _uploadImageToStorage() async {
-    if (_productImage == null) return null;
+    if (_sliderImage == null) return null;
     final ref = FirebaseStorage.instance
         .ref()
-        .child('product_images')
+        .child('slider_images')
         .child('${DateTime.now()}.jpg');
-    await ref.putFile(_productImage!);
+    await ref.putFile(_sliderImage!);
     return await ref.getDownloadURL();
   }
 
@@ -56,12 +56,12 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
       setState(() => _isLoading = true);
       try {
         String? imageUrl =
-            _isUrlOption ? prodImageL.text : await _uploadImageToStorage();
+            _isUrlOption ? sliderImageL.text : await _uploadImageToStorage();
 
         await FirebaseFirestore.instance.collection('Slider').add({
-          'name': prodName.text.trim(),
-          'description': prodDesp.text.trim(),
-          'link': prodLink.text.trim(),
+          'name': sliderName.text.trim(),
+          'description': sliderDesp.text.trim(),
+          'link': sliderLink.text.trim(),
           'image': imageUrl,
         });
 
@@ -155,10 +155,10 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
                     ? CustomInputField(
                         fillColor: const Color(0xFFF5FCF9),
                         filled: true,
-                        textController: prodImageL,
+                        textController: sliderImageL,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 16),
-                        hintText: "Product Image Url",
+                        hintText: "Slider Image Url",
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a URL';
@@ -180,8 +180,8 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
                             borderRadius: BorderRadius.circular(12),
                             color: AppColors.mediumAquarineLite,
                           ),
-                          child: _productImage != null
-                              ? Image.file(_productImage!, fit: BoxFit.cover)
+                          child: _sliderImage != null
+                              ? Image.file(_sliderImage!, fit: BoxFit.cover)
                               : const Center(
                                   child: Icon(Icons.camera_alt,
                                       size: 40,
@@ -211,7 +211,7 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
                           height: 24,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
-                      : const Text("Add Product"),
+                      : const Text("Add Slider"),
                 ),
               ],
             ),
@@ -223,13 +223,14 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
 
   List<Widget> _buildTextFields() {
     return [
-      _buildInputField(prodName, 'Title', 'Enter title of AD Slider'),
+      _buildInputField(sliderName, 'Title', 'Enter title of AD Slider'),
       const SizedBox(height: 16),
-      _buildInputField(prodDesp, 'Sub title', 'Enter title of AD Slider',
+      _buildInputField(sliderDesp, 'Sub title', 'Enter title of AD Slider',
           maxLines: 4),
       const SizedBox(height: 16),
       const SizedBox(height: 16),
-      _buildInputField(prodLink, 'Product Link', 'Please enter a valid URL',
+      _buildInputField(
+          sliderLink, 'Related Website Link', 'Please enter a valid URL',
           validator: (value) {
         if (value == null || value.isEmpty) return 'Please enter a URL';
         const urlPattern = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$';

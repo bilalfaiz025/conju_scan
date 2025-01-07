@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conju_app/constants/color_constant.dart';
 import 'package:conju_app/pages/nav_pages/setting/help_center.dart';
@@ -9,7 +11,6 @@ import 'package:conju_app/viewModel/prediction_vm.dart';
 import 'package:conju_app/widgets/botton/rounded_button.dart';
 import 'package:conju_app/widgets/others/custom_preview.dart';
 import 'package:conju_app/widgets/slider/auto_slider.dart';
-import 'package:conju_app/widgets/others/small_check.dart';
 import 'package:conju_app/widgets/text_styles.dart';
 import 'package:equal_space/equal_space.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../../services/firebase_services/user/user_services.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -34,11 +37,43 @@ class _UserHomePageState extends State<UserHomePage> {
   String userProfile = "";
   String userEmail = "email@example.com";
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  List<SliderItem> sliderItems = [];
+  User? userCredential = FirebaseAuth.instance.currentUser;
+
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchUserNameFromFirestore();
+    fetchSliderData();
+  }
+
+  Future<void> fetchSliderData() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('Slider').get();
+      final items = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return SliderItem(
+          title: data['name'] ?? 'No Title',
+          subtitle: data['description'] ?? 'No Description',
+          imageUrl: data['image'] ?? '',
+          buttonText: 'Learn More',
+          buttonLink: data['link'] ?? '',
+        );
+      }).toList();
+
+      setState(() {
+        sliderItems = items;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching slider data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchUserNameFromFirestore() async {
@@ -74,34 +109,11 @@ class _UserHomePageState extends State<UserHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<SliderItem> sliderItems = [
-      SliderItem(
-        title: "Do You Know?",
-        subtitle: "Conjunctivitis?",
-        imageUrl:
-            "https://drbishop.com/wp-content/uploads/2023/03/How-To-Tell-The-Difference-Between-Pink-Eye-Styes-Hero.jpg",
-        buttonText: "Know More",
-      ),
-      SliderItem(
-        title: "Did you know?",
-        subtitle: "Eye Care Tips",
-        imageUrl: "https://s3.envato.com/files/266906941/DSC_97274.jpg",
-        buttonText: "Learn More",
-      ),
-      SliderItem(
-        title: "Healthy Eyes",
-        subtitle: "Prevention of Eye Diseases",
-        imageUrl:
-            "https://i.pinimg.com/736x/c5/16/ff/c516ff9163fefeaa5974fc7c8855cd02.jpg",
-        buttonText: "Get Started",
-      ),
-    ];
-
     final PredictionViewModel predictionViewModel =
         Provider.of<PredictionViewModel>(context);
 
     return Scaffold(
-      key: scaffoldKey, // Set the scaffold key here
+      key: scaffoldKey,
       backgroundColor: AppColors.white,
       drawer: _buildDrawer(),
       body: SafeArea(
@@ -117,11 +129,15 @@ class _UserHomePageState extends State<UserHomePage> {
                 child: SpacedColumn(
                   space: MediaQuery.sizeOf(context).height * 0.02,
                   children: [
-                    AutoSlidingContainer(
-                      sliderItems: sliderItems,
-                      onTap: () => launchUrl(Uri.parse(
-                          "https://info.health.nz/conditions-treatments/eyes/conjunctivitis")),
-                    ),
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : sliderItems.isEmpty
+                            ? const Center(
+                                child: Text('No slider items available'))
+                            : AutoSlidingContainer(
+                                sliderItems: sliderItems,
+                                onTap: () async {},
+                              ),
                     Text(
                       "Get Your Diagnosis Instantly!",
                       style: Theme.of(context).textTheme.bodyLarge!.copyWith(
@@ -133,13 +149,114 @@ class _UserHomePageState extends State<UserHomePage> {
                           ),
                     ),
                     _buildImagePicker(predictionViewModel),
+                    Text('Recents'),
+                    SizedBox(
+                      height: 100,
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(userCredential!.uid)
+                            .collection('images')
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          }
+                          if (!snapshot.hasData ||
+                              snapshot.data!.docs.isEmpty) {
+                            return const Center(child: Text('No images found'));
+                          }
+                          return ListView.builder(
+                            itemCount: snapshot.data!.docs.length,
+                            itemBuilder: (context, index) {
+                              var imageData =
+                                  snapshot.data!.docs[index].get('image');
+                              DateTime imageName =
+                                  snapshot.data!.docs[index].get('date');
+                              String formattedDate =
+                                  "${imageName.day} ${(imageName.month)} ${imageName.year}";
+                              Uint8List image =
+                                  base64Decode(imageData.toString());
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  leading: CircleAvatar(
+                                    backgroundImage: MemoryImage(
+                                        image), // Assuming the image is in base64 format
+                                    radius: 30,
+                                  ),
+                                  title: Text(formattedDate,
+                                      style: MyTextStyle.normalText(context)),
+                                  subtitle: Text('Click on to review',
+                                      style: MyTextStyle.smallText(context)),
+                                  onTap: () {
+                                    _showImageDialog(context, image);
+                                  },
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.download),
+                                        onPressed: () {
+                                          FirebaseUserServices()
+                                              .downloadAndOpenImage(
+                                                  image); // Download the image when tapped
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete),
+                                        onPressed: () {
+                                          FirebaseUserServices()
+                                              .downloadAndOpenImage(
+                                                  image); // Download the image when tapped
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _showImageDialog(BuildContext context, Uint8List image) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            width: double.infinity,
+            height: 600,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.memory(image, fit: BoxFit.cover),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -400,9 +517,10 @@ class _UserHomePageState extends State<UserHomePage> {
             SvgPicture.asset(iconPath,
                 height: 30, width: 30, color: AppColors.white),
             const SizedBox(width: 8),
-            Text(label,
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    fontWeight: FontWeight.w600, color: AppColors.white)),
+            Text(
+              label,
+              style: MyTextStyle.smallText(context, isBold: true),
+            ),
           ],
         ),
       ),
@@ -411,13 +529,9 @@ class _UserHomePageState extends State<UserHomePage> {
 
   Widget _buildActionButton(
       IconData icon, String label, Color color, VoidCallback onTap) {
-    return Flexible(
-      child: SmallCheckWidget(
-        icon: icon,
-        title: label,
-        color: color,
-        onTap: onTap,
-      ),
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, size: 30, color: color),
     );
   }
 }

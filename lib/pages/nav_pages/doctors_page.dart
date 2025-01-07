@@ -1,4 +1,5 @@
 import 'package:conju_app/constants/color_constant.dart';
+import 'package:conju_app/services/firebase_services/user/user_services.dart';
 import 'package:conju_app/widgets/others/custom_tile.dart';
 import 'package:conju_app/widgets/text_styles.dart';
 
@@ -10,98 +11,105 @@ class DoctorContactListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<String> nameList = [
-      'Carla Schoen',
-      'Esther Howard',
-      'Robert Fox',
-      'Jacob Jones',
-      'Jacob Jones',
-      'Darlene Robertson',
-      'Ralph Edwards',
-      'Ronald Richards',
-    ];
-    List<String> addressList = [
-      'Johar Town,Lahore',
-      'Model Town,Lahore',
-      'Faisal Town,Lahore',
-      'Awan Town,Lahore',
-      'Gulberg 1,Lahore',
-      'Township,Lahore',
-      'DHA Phase 2,Lahore',
-      'Bahria Town,Lahore',
-    ];
     var h = MediaQuery.sizeOf(context).height;
     return Scaffold(
+      appBar: AppBar(
+        foregroundColor: AppColors.mediumAquarine,
+        backgroundColor: Colors.white,
+        title: const Text('Doctors list'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Ophthalmologist",
-                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyLarge!
-                            .color!
-                            .withOpacity(0.64),
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: FirebaseUserServices().fetchDoctors(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No doctors found.'));
+              } else {
+                final doctors = snapshot.data!;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Near your Location",
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge!
+                                  .color!
+                                  .withOpacity(0.64),
+                            ),
                       ),
-                ),
-                Text(
-                  "Near your Location",
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyLarge!
-                            .color!
-                            .withOpacity(0.64),
-                      ),
-                ),
-                for (int i = 0; i < nameList.length; i++)
-                  CustomeTileWidget(
-                    showDivider: false,
-                    leading: Container(
-                      height: h * 0.057,
-                      width: h * 0.057,
-                      decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.borderSide),
-                          image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://static.vecteezy.com/system/resources/previews/024/585/326/non_2x/3d-happy-cartoon-doctor-cartoon-doctor-on-transparent-background-generative-ai-png.png',
+                      for (var doctor in doctors)
+                        Stack(
+                          children: [
+                            CustomeTileWidget(
+                              showDivider: false,
+                              leading: Container(
+                                height: h * 0.077,
+                                width: h * 0.077,
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: AppColors.borderSide),
+                                  image: DecorationImage(
+                                    image:
+                                        NetworkImage(doctor['profile_picture']),
+                                    fit: BoxFit.fill,
+                                  ),
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
                               ),
-                              fit: BoxFit.fill),
-                          borderRadius: BorderRadius.circular(100)),
-                    ),
-                    title: nameList[i],
-                    style: MyTextStyle.normalText(context,
-                        fontWeight: FontWeight.w500),
-                    subTitle: Text(addressList[i]),
-                    trailing: InkWell(
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      onTap: () {
-                        launchUrl(Uri(scheme: 'tel', path: '1234567890'));
-                      },
-                      child: Container(
-                        height: h * 0.045,
-                        width: h * 0.08,
-                        decoration: BoxDecoration(
-                            color: AppColors.primaryColor,
-                            borderRadius: BorderRadius.circular(22)),
-                        child: Center(
-                            child: Text(
-                          'Contact',
-                          style: MyTextStyle.miniText(context,
-                              color: AppColors.white,
-                              fontWeight: FontWeight.w500),
-                        )),
-                      ),
-                    ),
-                  )
-              ],
-            ),
+                              title: doctor['name'],
+                              style: MyTextStyle.smallText(context,
+                                  fontWeight: FontWeight.w500),
+                              subTitle: Text(
+                                doctor['address'],
+                                style: MyTextStyle.smallText(
+                                  context,
+                                ),
+                              ),
+                              trailing: InkWell(
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  onTap: () {
+                                    launchUrl(Uri(
+                                        scheme: 'tel', path: doctor['phone']));
+                                  },
+                                  child: const Icon(Icons.call)),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 55,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  doctor['specialization'] ?? 'General',
+                                  style: MyTextStyle.miniText(context,
+                                      color: AppColors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      const Divider()
+                    ],
+                  ),
+                );
+              }
+            },
           ),
         ),
       ),
