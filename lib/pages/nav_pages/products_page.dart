@@ -39,8 +39,14 @@ class ProductsScreen extends StatelessWidget {
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
                   ),
-                  itemBuilder: (context, index) => ProductCard(
-                    product: products[index],
+                  itemBuilder: (context, index) => Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(20)),
+                    child: ProductCard(
+                      product: products[index],
+                    ),
                   ),
                 );
               }
@@ -77,6 +83,7 @@ class ProductCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF979797).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade400),
                 image: DecorationImage(
                   image: NetworkImage(product['image']),
                   fit: BoxFit.cover,

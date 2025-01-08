@@ -72,29 +72,28 @@ class _ManageDoctorScreenState extends State<ManageDoctorScreen> {
         ),
         iconTheme: const IconThemeData(color: Color(0xFF41BEA6)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Column(
-          children: [
-            StreamBuilder<QuerySnapshot>(
-              stream: _fetchDoctors(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: Column(
+        children: [
+          StreamBuilder<QuerySnapshot>(
+            stream: _fetchDoctors(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Error fetching doctors.'));
-                }
+              if (snapshot.hasError) {
+                return const Center(child: Text('Error fetching doctors.'));
+              }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No doctors found.'));
-                }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(child: Text('No doctors found.'));
+              }
 
-                final doctors = snapshot.data!.docs;
+              final doctors = snapshot.data!.docs;
 
-                return ListView.builder(
-                  shrinkWrap: true,
+              return Expanded(
+                // Wrap ListView.builder with Expanded
+                child: ListView.builder(
                   itemCount: doctors.length,
                   itemBuilder: (context, index) {
                     final doctor = doctors[index];
@@ -106,100 +105,104 @@ class _ManageDoctorScreenState extends State<ManageDoctorScreen> {
                     final specialization = doctor['specialization'] ??
                         'No specialization available';
                     final profilePic = doctor['profile_picture'] ?? '';
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      elevation: 8,
-                      shadowColor: Colors.black.withOpacity(0.5),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                          child: Row(
-                            children: [
-                              // Doctor Image (Profile Pic)
-                              ClipOval(
-                                child: profilePic.isNotEmpty
-                                    ? Image.network(
-                                        profilePic,
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return const Icon(
-                                            Icons.person,
-                                            size: 50,
-                                            color: Colors.grey,
-                                          );
-                                        },
-                                      )
-                                    : const Icon(
-                                        Icons.person,
-                                        size: 50,
-                                        color: Colors.grey,
+                        elevation: 8,
+                        shadowColor: Colors.black.withOpacity(0.5),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            child: Row(
+                              children: [
+                                // Doctor Image (Profile Pic)
+                                ClipOval(
+                                  child: profilePic.isNotEmpty
+                                      ? Image.network(
+                                          profilePic,
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return const Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: Colors.grey,
+                                            );
+                                          },
+                                        )
+                                      : const Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                ),
+                                const SizedBox(width: 16),
+                                // Doctor Info
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF41BEA6),
+                                        ),
                                       ),
-                              ),
-                              const SizedBox(width: 16),
-                              // Doctor Info
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                      const SizedBox(height: 8),
+                                      _buildDoctorDetail(
+                                          'Specialization:', specialization),
+                                      _buildDoctorDetail('Phone:', phone),
+                                      _buildDoctorDetail('Email:', email),
+                                      _buildDoctorDetail('Address:', address),
+                                    ],
+                                  ),
+                                ),
+                                // Action Buttons
+                                Column(
                                   children: [
-                                    Text(
-                                      name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF41BEA6),
+                                    IconButton(
+                                      onPressed: () => _editDoctor(doctorId),
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.blue,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
-                                    _buildDoctorDetail(
-                                        'Specialization:', specialization),
-                                    _buildDoctorDetail('Phone:', phone),
-                                    _buildDoctorDetail('Email:', email),
-                                    _buildDoctorDetail('Address:', address),
+                                    IconButton(
+                                      onPressed: () => _deleteDoctor(doctorId),
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                              // Action Buttons
-                              Column(
-                                children: [
-                                  IconButton(
-                                    onPressed: () => _editDoctor(doctorId),
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () => _deleteDoctor(doctorId),
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     );
                   },
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

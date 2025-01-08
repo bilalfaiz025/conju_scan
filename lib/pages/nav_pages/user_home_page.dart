@@ -152,6 +152,9 @@ class _UserHomePageState extends State<UserHomePage> {
                       ),
                     ),
                     _buildImagePicker(predictionViewModel),
+                    const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Recents Predictions')),
                     SizedBox(
                       height: 150,
                       child: StreamBuilder<QuerySnapshot>(
@@ -202,9 +205,6 @@ class _UserHomePageState extends State<UserHomePage> {
                                   base64Decode(imageData.toString());
                               return Column(
                                 children: [
-                                  const Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text('Recents Predictions')),
                                   Container(
                                     decoration: BoxDecoration(
                                         border: Border.all(
