@@ -7,12 +7,16 @@ class SmallCheckWidget extends StatelessWidget {
   final String title;
   final Function()? onTap;
   final double? height;
+  final Color? iconColor;
+  final TextStyle? txtstyle;
   const SmallCheckWidget(
       {super.key,
       required this.color,
       required this.icon,
       required this.onTap,
       this.height,
+      this.iconColor,
+      this.txtstyle,
       required this.title});
 
   @override
@@ -29,11 +33,17 @@ class SmallCheckWidget extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon),
+              Icon(
+                icon,
+                color: iconColor,
+              ),
               const SizedBox(
                 width: 5,
               ),
-              Text(title)
+              Text(
+                title,
+                style: txtstyle,
+              )
             ],
           )),
     );

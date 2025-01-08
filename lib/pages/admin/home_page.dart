@@ -2,7 +2,8 @@ import 'package:conju_app/pages/admin/services/doctor/add_doctor.dart';
 import 'package:conju_app/pages/admin/services/doctor/manage_docts.dart';
 import 'package:conju_app/pages/admin/services/product/add_product.dart';
 import 'package:conju_app/pages/admin/services/product/manage_products.dart';
-import 'package:conju_app/pages/admin/services/slider/update_slider.dart';
+import 'package:conju_app/pages/admin/services/slider/add_slider.dart';
+import 'package:conju_app/pages/admin/services/slider/manage_slider.dart';
 import 'package:conju_app/pages/admin/services/user/manage_users.dart';
 import 'package:conju_app/pages/splash_screen.dart';
 import 'package:conju_app/widgets/botton/rounded_button.dart';
@@ -10,7 +11,6 @@ import 'package:conju_app/widgets/others/small_check.dart';
 import 'package:conju_app/widgets/text_styles.dart';
 import 'package:equal_space/equal_space.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/color_constant.dart';
@@ -85,6 +85,7 @@ class AdminHomePage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: CustomRoundButton(
+                  color: const Color(0xFF00BF6D),
                   onPressed: () async {
                     FirebaseAuth.instance.signOut();
                     Get.snackbar(
@@ -147,35 +148,44 @@ class AdminHomePage extends StatelessWidget {
                   title: 'Check users',
                   secondTitle: 'Add Product',
                   icon: Icons.manage_accounts,
-                  secondIcon: Icons.add,
+                  secondIcon: Icons.add_box_rounded,
                 ),
                 _buildRow(
                   onTap: () => Get.to(const ManageProductScreen()),
                   secondOnTap: () => Get.to(const AddAdSliderScreen()),
                   title: 'Edit Products',
-                  secondTitle: 'Add Slider',
-                  icon: Icons.list,
-                  secondIcon: CupertinoIcons.dial,
+                  secondTitle: 'Add AD Slider',
+                  icon: Icons.edit,
+                  secondIcon: Icons.add_circle_outline_outlined,
                 ),
                 _buildRow(
                   onTap: () {
-                    Get.to(() => const AddDoctorScreen());
-                  },
-                  secondOnTap: () {
                     Get.to(() => const ManageDoctorScreen());
                   },
-                  title: 'Add Doctor',
-                  secondTitle: 'Remove Doctor',
-                  icon: Icons.dangerous,
-                  secondIcon: Icons.add,
+                  secondOnTap: () {
+                    Get.to(() => const AddDoctorScreen());
+                  },
+                  title: 'Manage Doctors',
+                  secondTitle: 'Add new doctor',
+                  icon: Icons.manage_accounts,
+                  secondIcon: Icons.person_add,
                 ),
                 SmallCheckWidget(
-                  color: AppColors.cleanerAppBarColor,
-                  icon: Icons.logout,
-                  height: 80,
-                  onTap: () => _showLogoutModal(context),
-                  title: 'Log out',
+                  color: AppColors.white,
+                  icon: Icons.slideshow_rounded,
+                  height: 50,
+                  onTap: () => Get.to(const ManageAdSlidersScreen()),
+                  title: 'Manage AD Slider',
                 ),
+                SmallCheckWidget(
+                    color: const Color(0xFF00BF6D),
+                    icon: Icons.logout,
+                    iconColor: Colors.white,
+                    height: 80,
+                    onTap: () => _showLogoutModal(context),
+                    title: 'Log out',
+                    txtstyle: MyTextStyle.normalText(context,
+                        color: Colors.white, fontWeight: FontWeight.w500)),
               ],
             ),
           ],

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conju_app/constants/color_constant.dart';
 import 'package:conju_app/pages/admin/home_page.dart';
+import 'package:conju_app/pages/admin/services/slider/edit_slider.dart';
 import 'package:conju_app/widgets/text_field/text_form_field.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -120,6 +121,17 @@ class _AddAdSliderScreenState extends State<AddAdSliderScreen> {
         title: const Text('Add AD Slider',
             style: TextStyle(
                 color: Color(0xFF41BEA6), fontWeight: FontWeight.w600)),
+        actions: [
+          IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.settings,
+                color: AppColors.mediumAquarine,
+              )),
+          const SizedBox(
+            width: 10,
+          )
+        ],
         iconTheme: const IconThemeData(color: Color(0xFF41BEA6)),
       ),
       body: Padding(

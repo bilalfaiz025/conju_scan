@@ -1,6 +1,5 @@
 import 'package:conju_app/constants/color_constant.dart';
 import 'package:conju_app/pages/auth/sign_in.dart';
-import 'package:conju_app/pages/nav_pages/user_home_page.dart';
 import 'package:conju_app/widgets/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

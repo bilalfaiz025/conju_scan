@@ -138,20 +138,22 @@ class _UserHomePageState extends State<UserHomePage> {
                                 sliderItems: sliderItems,
                                 onTap: () async {},
                               ),
-                    Text(
-                      "Get Your Diagnosis Instantly!",
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context)
-                                .textTheme
-                                .bodyMedium!
-                                .color!
-                                .withOpacity(0.64),
-                          ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Get Your Diagnosis Instantly!",
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .color!
+                                  .withOpacity(0.64),
+                            ),
+                      ),
                     ),
                     _buildImagePicker(predictionViewModel),
-                    Text('Recents'),
                     SizedBox(
-                      height: 100,
+                      height: 150,
                       child: StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance
                             .collection('users')
@@ -170,59 +172,97 @@ class _UserHomePageState extends State<UserHomePage> {
                           }
                           if (!snapshot.hasData ||
                               snapshot.data!.docs.isEmpty) {
-                            return const Center(child: Text('No images found'));
+                            return const Center();
                           }
                           return ListView.builder(
                             itemCount: snapshot.data!.docs.length,
                             itemBuilder: (context, index) {
                               var imageData =
                                   snapshot.data!.docs[index].get('image');
-                              DateTime imageName =
+                              Timestamp firebaseTimestamp =
                                   snapshot.data!.docs[index].get('date');
+                              DateTime imageName = firebaseTimestamp.toDate();
+                              List<String> months = [
+                                'JAN',
+                                'FEB',
+                                'MAR',
+                                'APR',
+                                'MAY',
+                                'JUN',
+                                'JUL',
+                                'AUG',
+                                'SEP',
+                                'OCT',
+                                'MOV',
+                                'DEC'
+                              ];
                               String formattedDate =
-                                  "${imageName.day} ${(imageName.month)} ${imageName.year}";
+                                  "${imageName.day} ${months[imageName.month - 1]} ${imageName.year}";
                               Uint8List image =
                                   base64Decode(imageData.toString());
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  leading: CircleAvatar(
-                                    backgroundImage: MemoryImage(
-                                        image), // Assuming the image is in base64 format
-                                    radius: 30,
-                                  ),
-                                  title: Text(formattedDate,
-                                      style: MyTextStyle.normalText(context)),
-                                  subtitle: Text('Click on to review',
-                                      style: MyTextStyle.smallText(context)),
-                                  onTap: () {
-                                    _showImageDialog(context, image);
-                                  },
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.download),
-                                        onPressed: () {
-                                          FirebaseUserServices()
-                                              .downloadAndOpenImage(
-                                                  image); // Download the image when tapped
-                                        },
+                              return Column(
+                                children: [
+                                  const Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text('Recents Predictions')),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: AppColors.mediumAquarine),
+                                        borderRadius:
+                                            BorderRadius.circular(20)),
+                                    child: ListTile(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 5),
+                                      leading: CircleAvatar(
+                                        backgroundImage: MemoryImage(
+                                            image), // Assuming the image is in base64 format
+                                        radius: 30,
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete),
-                                        onPressed: () {
-                                          FirebaseUserServices()
-                                              .downloadAndOpenImage(
-                                                  image); // Download the image when tapped
-                                        },
+                                      title: Text(formattedDate,
+                                          style:
+                                              MyTextStyle.smallText(context)),
+                                      subtitle: Text('Click on to review',
+                                          style: MyTextStyle.miniText(context)),
+                                      onTap: () {
+                                        _showImageDialog(context, image);
+                                      },
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.download),
+                                            onPressed: () {
+                                              FirebaseUserServices()
+                                                  .downloadAndOpenImage(
+                                                      image); // Download the image when tapped
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.redAccent,
+                                            ),
+                                            onPressed: () async {
+                                              final documentId =
+                                                  snapshot.data!.docs[index].id;
+                                              // Update key if needed
+                                              await FirebaseUserServices()
+                                                  .deleteImageFromFirebase(
+                                                userId: userCredential!.uid,
+                                                documentId: documentId,
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(
+                                    height: 5,
+                                  ),
+                                ],
                               );
                             },
                           );
@@ -247,13 +287,9 @@ class _UserHomePageState extends State<UserHomePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Container(
-            width: double.infinity,
-            height: 600,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.memory(image, fit: BoxFit.cover),
-            ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.memory(image, fit: BoxFit.cover),
           ),
         );
       },
@@ -445,27 +481,28 @@ class _UserHomePageState extends State<UserHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildActionButton(Icons.cancel_outlined, 'Cancel', Colors.amber,
-                  () {
+              _buildActionButton(Icons.replay, 'Cancel', Colors.amber, () {
                 setState(() {
                   image = null;
                 });
               }),
               const SizedBox(width: 10),
-              _buildActionButton(
-                  Icons.done_all_rounded, 'Upload', Colors.greenAccent,
-                  () async {
-                if (image != null) {
-                  Get.snackbar("Predicting", "Image is being uploaded");
-                  await predictionViewModel.getPredictData(image!.path);
-                  Get.to(PredictionPage(
-                    modeldata: predictionViewModel.modelData,
-                    image: image,
-                  ));
-                } else {
-                  Get.snackbar("Error", "Select an image first");
-                }
-              }),
+              Expanded(
+                child: _buildActionButton(
+                    Icons.done_all_rounded, 'Upload', Colors.greenAccent,
+                    () async {
+                  if (image != null) {
+                    Get.snackbar("Predicting", "Image is being uploaded");
+                    await predictionViewModel.getPredictData(image!.path);
+                    Get.to(PredictionPage(
+                      modeldata: predictionViewModel.modelData,
+                      image: image,
+                    ));
+                  } else {
+                    Get.snackbar("Error", "Select an image first");
+                  }
+                }),
+              ),
             ],
           ),
         ],
@@ -519,7 +556,8 @@ class _UserHomePageState extends State<UserHomePage> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: MyTextStyle.smallText(context, isBold: true),
+              style: MyTextStyle.normalText(context,
+                  fontWeight: FontWeight.w500, color: AppColors.white),
             ),
           ],
         ),
@@ -529,9 +567,17 @@ class _UserHomePageState extends State<UserHomePage> {
 
   Widget _buildActionButton(
       IconData icon, String label, Color color, VoidCallback onTap) {
-    return IconButton(
-      onPressed: onTap,
-      icon: Icon(icon, size: 30, color: color),
+    return Container(
+      decoration:
+          BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          size: 30,
+          color: AppColors.white,
+        ),
+      ),
     );
   }
 }

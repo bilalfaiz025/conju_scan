@@ -4,7 +4,7 @@ import 'package:conju_app/services/network/network_class.dart';
 import 'package:http/http.dart' as http;
 
 class PredictionService {
-  static String apiUrl = "http://192.168.32.227:8000/predict/";
+  static String apiUrl = "http://192.168.0.105:8000/predict/";
   static Future<dynamic> uploadImage(String imagePath) async {
     var request = http.MultipartRequest(
       'POST',
@@ -25,7 +25,6 @@ class PredictionService {
               .toList();
           return Success(code: 200, response: modelResponse);
         } else if (decodedResponse is Map<String, dynamic>) {
-          print("response here");
           PredictionModel predictionModel =
               PredictionModel.fromJson(decodedResponse);
           return Success(code: 200, response: [predictionModel]);

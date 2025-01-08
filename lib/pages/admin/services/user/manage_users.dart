@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:conju_app/constants/color_constant.dart';
 import 'package:conju_app/services/firebase_services/admin/admin_services.dart';
-import 'package:flutter/material.dart';
 
 class UsersListScreen extends StatelessWidget {
   const UsersListScreen({super.key});
@@ -11,8 +13,15 @@ class UsersListScreen extends StatelessWidget {
     return FirebaseFirestore.instance.collection('users').snapshots();
   }
 
+  // Get the current logged-in user ID
+  String? _currentUserId() {
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUserId = _currentUserId();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -62,6 +71,8 @@ class UsersListScreen extends StatelessWidget {
                   profilePic: profilePic,
                   isDisabled: isDisabled,
                   role: role,
+                  index: index + 1,
+                  isCurrentUser: userId == currentUserId,
                   onToggleDisable: () =>
                       AdminServices().disableUser(userId, isDisabled),
                 ),
@@ -83,6 +94,8 @@ class UserCard extends StatelessWidget {
   final bool isDisabled;
   final String role;
   final VoidCallback onToggleDisable;
+  final int index;
+  final bool isCurrentUser;
 
   const UserCard({
     required this.userId,
@@ -91,77 +104,134 @@ class UserCard extends StatelessWidget {
     required this.phone,
     required this.profilePic,
     required this.isDisabled,
+    required this.index,
     required this.role,
     required this.onToggleDisable,
+    required this.isCurrentUser,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 8,
-      color: AppColors.white,
-      shadowColor: Colors.black.withOpacity(0.9),
-      child: Column(
-        children: [
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(profilePic),
-              radius: 35,
-              backgroundColor: Colors.white,
-              child: profilePic.isEmpty
-                  ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                  : null,
-            ),
-            title: Text(
-              name,
-              style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF41BEA6)),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(email, style: const TextStyle(color: Colors.black)),
-                Text(phone, style: const TextStyle(color: Colors.black)),
-                const SizedBox(height: 4),
-                Text(
-                  'Role: $role',
-                  style: TextStyle(
-                      color: Colors.black.withOpacity(0.7), fontSize: 12),
+    return Stack(
+      children: [
+        Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 8,
+          color: AppColors.white,
+          shadowColor: Colors.black.withOpacity(0.9),
+          child: Column(
+            children: [
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(profilePic),
+                  radius: 35,
+                  backgroundColor: Colors.white,
+                  child: profilePic.isEmpty
+                      ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                      : null,
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onToggleDisable,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDisabled
-                      ? const Color(0xFF92D7E7)
-                      : const Color(0xFF00BF6D),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                ),
-                child: Text(
-                  isDisabled ? 'Enable Account' : 'Disable Account',
+                title: Text(
+                  name,
                   style: const TextStyle(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.white),
+                      color: Color(0xFF41BEA6)),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(email, style: const TextStyle(color: Colors.black)),
+                    Text(phone, style: const TextStyle(color: Colors.black)),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Role: $role',
+                      style: TextStyle(
+                          color: Colors.black.withOpacity(0.7), fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              if (!isCurrentUser)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onToggleDisable,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDisabled
+                            ? const Color(0xFF92D7E7)
+                            : const Color(0xFF00BF6D),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 20),
+                      ),
+                      child: Text(
+                        isDisabled ? 'Enable Account' : 'Disable Account',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.snackbar(
+                            "Sorry :-(", "Current User can be altered");
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 20),
+                      ),
+                      child: const Text(
+                        'Current User',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ),
+                )
+            ],
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          right: 10,
+          top: 0,
+          child: Container(
+            width: 40,
+            height: 30,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.blue.shade700,
+            ),
+            child: Center(
+                child: Text(
+              "#${index.toString()}",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            )),
+          ),
+        ),
+      ],
     );
   }
 }

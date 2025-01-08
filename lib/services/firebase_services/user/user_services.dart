@@ -1,8 +1,6 @@
 // ignore_for_file: avoid_print
-
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -44,18 +42,12 @@ class FirebaseUserServices {
 
   Future<Map<String, dynamic>?> getCurrentUserInfo() async {
     try {
-      // Get the current user
       User? user = FirebaseAuth.instance.currentUser;
-
-      // Check if the user is logged in
       if (user != null) {
-        // Get the user's document from the "users" collection
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .get();
-
-        // Check if the document exists
         if (userDoc.exists) {
           return userDoc.data()
               as Map<String, dynamic>; // Return all user data as a map
@@ -64,7 +56,6 @@ class FirebaseUserServices {
           return null;
         }
       } else {
-        // User is not logged in
         print("No user logged in.");
         return null;
       }
@@ -113,6 +104,28 @@ class FirebaseUserServices {
               'specialization': doc['specialization'] ?? '',
             })
         .toList();
+  }
+
+  Future<void> deleteImageFromFirebase({
+    required String userId,
+    required String documentId,
+  }) async {
+    try {
+      // Delete the image document from Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('images')
+          .doc(documentId)
+          .delete();
+
+      Get.snackbar(
+        "Deleted",
+        "Image has been successfully deleted",
+      );
+    } catch (e) {
+      Get.snackbar("Error", "Failed to delete image: $e");
+    }
   }
 
   Future<void> downloadAndOpenImage(Uint8List imageData) async {
