@@ -6,7 +6,7 @@ Conju Scan is a mobile application built with **Flutter** that leverages AI to d
 This project is an extension of a research study on conjunctivitis that I led, culminating in a published article exploring its types and impacts.
 
 ## Screenshots here
-![Description of Image](assets/ConjuScan.pdf)
+[Download the Research Article](assets/ConjuScan.pdf)
 
 ### User Features:
 - **AI Diagnosis:** Upload images of the eye and receive predictions for conjunctivitis.
